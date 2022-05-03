@@ -1,3 +1,4 @@
+(* Ababacar Sadikh GUEYE *)
 type coup   = int;;
 type case   = |Rouge|Trou|Jaune;;
 type joueur = |Homme|Machine;;
@@ -5,7 +6,7 @@ type plateau  = case array array;;
 type colonne  = {plein:bool; nbpp:int};;
 type position = {plateau:plateau; colonnes:colonne array};;
 type compteur = {mutable homme:int; mutable machine:int};;
-type cas = {configuration:int; joueur:bool; suivant:int; gagn�:bool};;
+type cas = {configuration:int; joueur:bool; suivant:int; gagne:bool};;
 type best_coup = {bcoup:coup; valeur:int};;
 
 open Graphics
@@ -25,13 +26,13 @@ let case_of_joueur = function
 
 exception Cnv  of string;;
 exception Chgt of string;;
-exception Gagn� of coup;; (*maintenant c'est gagn� si on joue ce coup l�*)
+exception Gagne of coup;; (*maintenant c'est gagné si on joue ce coup le*)
 exception Gagnant;; (*ce plateau est gagnant*)
 
 open_graph "";;
 let gauche = (size_x () -420)/2 and bas= (size_y () -360)/2;;
 
-(*la d�finition de fl�che :*)
+(*la definition de fleche :*)
 clear_graph ();
 moveto 30 60;
 lineto 30 25;
@@ -39,13 +40,13 @@ moveto 30 00;
 lineto 15 25;
 lineto 45 25;
 lineto 30 00;;
-let fl�che = get_image 0 0 60 60;;
+let fleche = get_image 0 0 60 60;;
 clear_graph ();;
 
 let (char_w,char_h) = text_size "X";;
 
 (******************************************************************)
-(*entr�es-sorties*)
+(*entrees-sorties*)
 
 let set_couleur case = match case with
 |Rouge -> set_color red
@@ -69,8 +70,8 @@ done
 ;;
 
 
-let d�signe bool coup =
-if bool then draw_image fl�che (gauche + 60*coup) (bas + 360)
+let designe bool coup =
+if bool then draw_image fleche (gauche + 60*coup) (bas + 360)
 else (set_color background; fill_rect (gauche + 60*coup) (bas + 360) 60 60)
 ;;
 
@@ -81,24 +82,24 @@ else raise (Cnv "hors plateau")
 ;;
 
 let get_coup_homme () =
-let pasd�cid� = ref true
-  and old_coup = ref (-1) (*hors plateau � l'initialisation*)
+let pasdecide = ref true
+  and old_coup = ref (-1) (*hors plateau e l'initialisation*)
   and coup = ref (-1) in
-while !pasd�cid� do
+while !pasdecide do
   let status = wait_next_event [Mouse_motion; Button_down; Key_pressed] in
   (try coup:= coup_of_as status.mouse_x with
     |Cnv "hors plateau" -> ());
   if status.keypressed = true then raise (Chgt "")
   else if status.button = true then
-    try (pasd�cid�:=false; coup:= coup_of_as status.mouse_x) with
+    try (pasdecide:=false; coup:= coup_of_as status.mouse_x) with
     |Cnv "hors plateau" -> raise (Cnv "Cliquer sur une colonne !")
-  (*derni�re possibilit� : on a seulement boug� la souris :*)
+  (*derniere possibilite : on a seulement bouge la souris :*)
   else if !old_coup <> !coup then
-    begin d�signe false !old_coup; d�signe true !coup;
+    begin designe false !old_coup; designe true !coup;
       old_coup:= !coup;
     end;
 done;
-d�signe false !coup;
+designe false !coup;
 !coup
 ;;
 
@@ -115,7 +116,7 @@ moveto gauche 10;
 
 
 (*renvoie la longueur du plus long mot de l (si mdt=0)*)
-let rec max_length l mdt = (*max d�j� trouv�*)
+let rec max_length l mdt = (*max deje trouve*)
 match l with
 |[] -> mdt
 |a::q -> max_length q (max (String.length a) mdt)
@@ -129,12 +130,12 @@ String.concat "" [String.make marge ' '; mot; String.make (place - marge - n) ' 
 
 open List
 
-let liste_de_choix en_t�te ll =
+let liste_de_choix en_tete ll =
 let l = ref (rev ll)
   and nb = length ll  and m = max_length ll 0
   and pos = ref 10 in
 let box_w = m*char_w + 16  and box_h = char_h + 16 in
-let d�calage = box_h + 8 in
+let decalage = box_h + 8 in
 for i=1 to nb do
   let choix = hd !l in
   set_color cyan;
@@ -142,21 +143,21 @@ for i=1 to nb do
   set_color black;
       moveto 18 (8 + !pos); draw_string (centre choix m);
   l:= tl !l;
-  pos:= !pos + d�calage
+  pos:= !pos + decalage
 done;
-moveto 17 (10 + !pos); draw_string en_t�te;
+moveto 17 (10 + !pos); draw_string en_tete;
 let status=wait_next_event [Button_down] in let (x,y) = (status.mouse_x,status.mouse_y) in
   let result = ref (-1) in
   if (10 <= x) & (x <= box_w) & (10 <= y) & (y <= 10 + !pos)
-    then begin let i = (y-10) /d�calage in result:= nb -i -1 end;
+    then begin let i = (y-10) /decalage in result:= nb -i -1 end;
   set_color background;
-    fill_rect 10 10 (max box_w (8 + (String.length en_t�te)*char_w)) (!pos + char_h);
+    fill_rect 10 10 (max box_w (8 + (String.length en_tete)*char_w)) (!pos + char_h);
         (*pour effacer les boutons*)
 !result;
 ;;
 
 let confirmation () =
-if (liste_de_choix "Etes-vous s�r ?" ["Quitter !"; "En fait..."]) = 0
+if (liste_de_choix "Etes-vous ser ?" ["Quitter !"; "En fait..."]) = 0
 then exit 0;
 ;;
 
@@ -165,7 +166,7 @@ match liste_de_choix "Vous voulez..." ["changer le niveau"; "recommencer"; "rien
 |(-1) -> ()
 |0 -> raise (Chgt "niveau")
 |1 -> raise (Chgt "partie")
-|2 -> () (*l'�xecution de la fonction qui a appel� changement va reprendre*)
+|2 -> () (*l'execution de la fonction qui a appele changement va reprendre*)
 |3 -> confirmation (); changement ();
 |_ -> failwith "changement"
 ;;
@@ -180,7 +181,7 @@ match liste_de_choix "Qui commence ?" ["L'ordinateur"; "Le joueur"; "Quitter"] w
 ;;
 
 let choisir_niveau () =
-match liste_de_choix "Vous �tes..." ["D�butant"; "Pas mauvais"; "Bon joueur"; "Joueur patient"] with
+match liste_de_choix "Vous etes..." ["Debutant"; "Pas mauvais"; "Bon joueur"; "Joueur patient"] with
 |(-1) -> raise (Chgt "niv pas choisi")
 |0 -> 1
 |1 -> 2
@@ -190,7 +191,7 @@ match liste_de_choix "Vous �tes..." ["D�butant"; "Pas mauvais"; "Bon joueur"
 ;;
 
 
-(*fin de l'interface graphique, on passe au choses s�rieuses*)
+(*fin de l'interface graphique, on passe au choses serieuses*)
 (******************************************************************)
 
 let copy_position p =
@@ -205,7 +206,7 @@ let joue_coup coup joueur position =
 let c=case_of_joueur joueur
   and p=copy_position position in
 let n = (p.colonnes.(coup)).nbpp +1 in
-let b = n=6 in (*colonne pleine apr�s avoir jou� le coup ?*)
+let b = n=6 in (*colonne pleine apres avoir joue le coup ?*)
 let ncol = {plein=b; nbpp=n} in (*la nouvelle colonne*)
 p.colonnes.(coup) <- ncol;
 p.plateau.(coup).(n-1) <- c;
@@ -240,13 +241,13 @@ result;
 
 let estime_graph =
 let c bool a b c d e f = (*constructeur d'un noeud, ie de trois cas*)
-    [|{configuration=a; joueur=bool; suivant=b; gagn�=false};
-      {configuration=c; joueur=bool; suivant=d; gagn�=false};
-      {configuration=e; joueur=bool; suivant=f; gagn�=false};
+    [|{configuration=a; joueur=bool; suivant=b; gagne=false};
+      {configuration=c; joueur=bool; suivant=d; gagne=false};
+      {configuration=e; joueur=bool; suivant=f; gagne=false};
     |]
   and t=true and f=false in
-[| (*chaque �l�ment d�signe l'action � faire en fonction du pion suivant
-     dans l'ordre Rouge, Trou, Jaune. Se r�f�rer au graph papier pour mieux voir !*)
+[| (*chaque element designe l'action e faire en fonction du pion suivant
+     dans l'ordre Rouge, Trou, Jaune. Se referer au graph papier pour mieux voir !*)
 (*0*) c  t 0 3  0 4  0 2 ;
 (*1*) c  t 0 5  0 6  0 7 ;(*t est discutable*)
 (*2*) c  f 0 0  0 8  0 9 ;
@@ -257,10 +258,10 @@ let c bool a b c d e f = (*constructeur d'un noeud, ie de trois cas*)
 (*7*) c  f 0 0  0 19 0 20;
 (*8*) c  f 0 5  0 21 0 22;
 (*9*) c  f 0 0  0 23 0 24;
-(*10*) [|{configuration = -1; joueur = true; suivant = -1; gagn� = true}; (*youpi!*)
-         {configuration =  1; joueur = true; suivant = 11; gagn� = false};
-         {configuration =  0; joueur = true; suivant = 2 ; gagn� = false}|]
-(*enfin de l'action ! Les deux premiers indices sont hors-limites car ils ne doivent pas �tre utilis�s : On a GAGN� !
+(*10*) [|{configuration = -1; joueur = true; suivant = -1; gagne = true}; (*youpi!*)
+         {configuration =  1; joueur = true; suivant = 11; gagne = false};
+         {configuration =  0; joueur = true; suivant = 2 ; gagne = false}|]
+(*enfin de l'action ! Les deux premiers indices sont hors-limites car ils ne doivent pas etre utilises : On a GAGNe !
 *);
 (*11*) c  t 2 12 3 13 0 7 ;
 (*12*) c  t 2 14 4 15 0 2 ;
@@ -268,59 +269,59 @@ let c bool a b c d e f = (*constructeur d'un noeud, ie de trois cas*)
 (*14*) c  t 1 10 7 11 0 2 ;
 (*15*) c  t 4 12 8 13 0 7 ;
 (*16*) c  t 3 14 8 15 0 2 ;
-(*17*) [|{configuration = 6; joueur = true; suivant = 16; gagn� = false};
-         {configuration = 0; joueur = true; suivant = 17; gagn� = false};
+(*17*) [|{configuration = 6; joueur = true; suivant = 16; gagne = false};
+         {configuration = 0; joueur = true; suivant = 17; gagne = false};
            (*joueur=true est discutable*)
-         {configuration = 6; joueur = false; suivant = 18; gagn� = false}|];
+         {configuration = 6; joueur = false; suivant = 18; gagne = false}|];
 (*18*) c  f 0 0  8 19 3 20;
 (*19*) c  f 0 5  8 21 4 22;
 (*20*) c  f 0 0  7 23 1 24;
 (*21*) c  f 0 16 6 17 5 18;
 (*22*) c  f 0 0  4 19 2 20;
 (*23*) c  f 0 5  3 21 2 22;
-(*24*) [|{configuration =  0; joueur = false; suivant = 0 ; gagn� = false};
-         {configuration =  1; joueur = false; suivant = 23; gagn� = false};
-         {configuration = -1; joueur = false; suivant = -1; gagn� = true}; (*youpi!*)|]
-(*Les deux derniers indices sont hors-limites car ils ne doivent pas �tre utilis�s : On a GAGN� !
+(*24*) [|{configuration =  0; joueur = false; suivant = 0 ; gagne = false};
+         {configuration =  1; joueur = false; suivant = 23; gagne = false};
+         {configuration = -1; joueur = false; suivant = -1; gagne = true}; (*youpi!*)|]
+(*Les deux derniers indices sont hors-limites car ils ne doivent pas etre utilises : On a GAGNe !
 *)
 |];;
 
-let estime_ligne param�tres plateau dx dy xmin ymin longueur result =
+let estime_ligne parametres plateau dx dy xmin ymin longueur result =
 let x=ref xmin and y=ref ymin
   and noeud = ref ( int_of_case plateau.(xmin).(ymin) ) in
 for i=(-1) to longueur do (*on doit boucler longueur+3-1 fois*)
   x:= !x+dx; y:= !y+dy;
   let case = plateau.(!x).(!y) in
   let cas = estime_graph.(!noeud).(int_of_case case) in
-  if cas.gagn� then raise Gagnant;
+  if cas.gagne then raise Gagnant;
   noeud:= cas.suivant;
-  result:= !result + (if cas.joueur then param�tres.(cas.configuration)
-                                    else ~- (param�tres.(cas.configuration)));
+  result:= !result + (if cas.joueur then parametres.(cas.configuration)
+                                    else ~- (parametres.(cas.configuration)));
 done;
 ;;
 
-let estime param�tres plateau =
+let estime parametres plateau =
 let result = ref 0 in
 for i=0 to 5 do (*horizontal*)
-  estime_ligne param�tres plateau 1 0 0 i 4 result;
+  estime_ligne parametres plateau 1 0 0 i 4 result;
 done;
 for i=0 to 6 do (*vertical*)
-  estime_ligne param�tres plateau 0 1 i 0 3 result;
+  estime_ligne parametres plateau 0 1 i 0 3 result;
 done;
 (*diagonal montant*)
-  estime_ligne param�tres plateau 1 1 0 2 1 result;
-  estime_ligne param�tres plateau 1 1 0 1 2 result;
-  estime_ligne param�tres plateau 1 1 0 0 3 result;
-  estime_ligne param�tres plateau 1 1 1 0 3 result;
-  estime_ligne param�tres plateau 1 1 2 0 2 result;
-  estime_ligne param�tres plateau 1 1 3 0 1 result;
+  estime_ligne parametres plateau 1 1 0 2 1 result;
+  estime_ligne parametres plateau 1 1 0 1 2 result;
+  estime_ligne parametres plateau 1 1 0 0 3 result;
+  estime_ligne parametres plateau 1 1 1 0 3 result;
+  estime_ligne parametres plateau 1 1 2 0 2 result;
+  estime_ligne parametres plateau 1 1 3 0 1 result;
 (*diagonal descendant*)
-  estime_ligne param�tres plateau 1 (-1) 0 3 1 result;
-  estime_ligne param�tres plateau 1 (-1) 0 4 2 result;
-  estime_ligne param�tres plateau 1 (-1) 0 5 3 result;
-  estime_ligne param�tres plateau 1 (-1) 1 5 3 result;
-  estime_ligne param�tres plateau 1 (-1) 2 5 2 result;
-  estime_ligne param�tres plateau 1 (-1) 3 5 1 result;
+  estime_ligne parametres plateau 1 (-1) 0 3 1 result;
+  estime_ligne parametres plateau 1 (-1) 0 4 2 result;
+  estime_ligne parametres plateau 1 (-1) 0 5 3 result;
+  estime_ligne parametres plateau 1 (-1) 1 5 3 result;
+  estime_ligne parametres plateau 1 (-1) 2 5 2 result;
+  estime_ligne parametres plateau 1 (-1) 3 5 1 result;
 !result
 ;;
 (*doit toujours renvoyer entre mine et maxe*)
@@ -331,43 +332,43 @@ let inv_joueur = function
 |Homme -> Machine
 ;;
 
-let rec get_coup_machine profondeur joueur position param�tres =
+let rec get_coup_machine profondeur joueur position parametres =
 let cp = ref (coups_possibles position) in
 let compare = ( match joueur with Machine -> (>=) |Homme -> (<=) ) in
 let meilleur,pire = ( match joueur with Machine -> maxe,mine; |Homme -> mine,maxe ) in
 let best_coup = ref {bcoup=hd !cp; valeur=pire} in
-     (*vir� � la premi�re comparaison*)
-     (*� modifier s'il n'y a pas toujours un coup possible*)
+     (*vire e la premiere comparaison*)
+     (*e modifier s'il n'y a pas toujours un coup possible*)
 let switch = profondeur>1 in
 (try while !cp <> [] do
        let coup_test=hd !cp in
        cp:= tl !cp;
        let position_test = joue_coup coup_test joueur position in
-       (try let value = ref (estime param�tres position_test.plateau) in (*c'est ici que se soul�ve Gagnant*)
+       (try let value = ref (estime parametres position_test.plateau) in (*c'est ici que se souleve Gagnant*)
            if switch (*then creuser plus profond*) then value :=
-             (get_coup_machine (profondeur-1) (inv_joueur joueur) position_test param�tres).valeur;
+             (get_coup_machine (profondeur-1) (inv_joueur joueur) position_test parametres).valeur;
            if compare !value !best_coup.valeur then best_coup:={bcoup=coup_test; valeur= !value};
-         with Gagnant -> raise (Gagn� coup_test););
+         with Gagnant -> raise (Gagne coup_test););
        done;
        !best_coup;
-with Gagn� c -> {bcoup=c; valeur=meilleur});
+with Gagne c -> {bcoup=c; valeur=meilleur});
 ;;
 
-let joue_coup_machine niveau position param�tres =
-let coup_�_jouer = (get_coup_machine niveau Machine position param�tres).bcoup in
-let result = joue_coup coup_�_jouer Machine position in
-draw_case Rouge (coup_�_jouer, result.colonnes.(coup_�_jouer).nbpp -1);
+let joue_coup_machine niveau position parametres =
+let coup_e_jouer = (get_coup_machine niveau Machine position parametres).bcoup in
+let result = joue_coup coup_e_jouer Machine position in
+draw_case Rouge (coup_e_jouer, result.colonnes.(coup_e_jouer).nbpp -1);
 result;
 ;;
 
 
-let test_gagn� plateau =
+let test_gagne plateau =
 try (let _=estime [|0;0;0; 0;0;0; 0;0;0|] plateau in false) with
   |Gagnant -> true
 ;;
 
 (*enfin la conclusion*)
-let main param�tres =
+let main parametres =
 clear_graph ();
 let niveau = ref 2 in
 let score = {homme=0; machine=0} in (*de type compteur*)
@@ -389,23 +390,23 @@ while true do (*une partie*)
                   {plein=false; nbpp=0};
                   {plein=false; nbpp=0};|]} in
   draw_plateau !position_courante.plateau;
-  if temp then position_courante:= joue_coup_machine !niveau !position_courante param�tres;
+  if temp then position_courante:= joue_coup_machine !niveau !position_courante parametres;
   let fini = ref false in
   while not !fini do (*un coup du joueur et de la machine*)
-    let jou� = ref false in
-    while not !jou� do (*un coup du joueur*)
-      try (position_courante:= joue_coup_homme !position_courante; jou�:= true) with
+    let joue = ref false in
+    while not !joue do (*un coup du joueur*)
+      try (position_courante:= joue_coup_homme !position_courante; joue:= true) with
       |Chgt "niveau" -> (try niveau:= choisir_niveau() with Chgt "niv pas choisi" -> ());
-      |Chgt "partie" -> jou�:= true; fini:= true;
+      |Chgt "partie" -> joue:= true; fini:= true;
                         score.machine <- score.machine +1;
-      |Cnv "plateau plein" -> jou�:= true; fini:= true;
+      |Cnv "plateau plein" -> joue:= true; fini:= true;
     done;
-    if test_gagn� !position_courante.plateau
+    if test_gagne !position_courante.plateau
     then (fini:= true; score.homme <- score.homme +1;)
     else begin
-      (try position_courante:= joue_coup_machine !niveau !position_courante param�tres; with
+      (try position_courante:= joue_coup_machine !niveau !position_courante parametres; with
          |Cnv "plateau plein" -> fini:= true;);
-      if test_gagn� !position_courante.plateau
+      if test_gagne !position_courante.plateau
       then (fini:= true; score.machine <- score.machine +1)
     end;
   done;
